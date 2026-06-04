@@ -64,7 +64,7 @@ func parseVirtualKeyFromHTTPRequest(req *schemas.HTTPRequest) *string {
 	var virtualKeyValue string
 	vkHeader := req.CaseInsensitiveHeaderLookup("x-bf-vk")
 	if vkHeader != "" && strings.HasPrefix(strings.ToLower(vkHeader), VirtualKeyPrefix) {
-		return bifrost.Ptr(vkHeader)
+		return new(vkHeader)
 	}
 	authHeader := req.CaseInsensitiveHeaderLookup("Authorization")
 	if authHeader != "" {
@@ -76,16 +76,16 @@ func parseVirtualKeyFromHTTPRequest(req *schemas.HTTPRequest) *string {
 		}
 	}
 	if virtualKeyValue != "" {
-		return bifrost.Ptr(virtualKeyValue)
+		return new(virtualKeyValue)
 	}
 	xAPIKey := req.CaseInsensitiveHeaderLookup("x-api-key")
 	if xAPIKey != "" && strings.HasPrefix(strings.ToLower(xAPIKey), VirtualKeyPrefix) {
-		return bifrost.Ptr(xAPIKey)
+		return new(xAPIKey)
 	}
 	// Checking x-goog-api-key header
 	xGoogleAPIKey := req.CaseInsensitiveHeaderLookup("x-goog-api-key")
 	if xGoogleAPIKey != "" && strings.HasPrefix(strings.ToLower(xGoogleAPIKey), VirtualKeyPrefix) {
-		return bifrost.Ptr(xGoogleAPIKey)
+		return new(xGoogleAPIKey)
 	}
 	return nil
 }
