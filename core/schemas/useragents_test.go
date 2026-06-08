@@ -31,3 +31,28 @@ func TestDetectAppFromUserAgent(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchUserAgent(t *testing.T) {
+	tests := []struct {
+		name      string
+		userAgent string
+		pattern   string
+		matchType UserAgentMappingMatchType
+		want      bool
+	}{
+		{name: "contains", userAgent: "claude-cli/2.1.168 (external, cli)", pattern: "CLI/2.1", matchType: UserAgentMappingMatchTypeContains, want: true},
+		{name: "starts with", userAgent: "claude-cli/2.1.168", pattern: "Claude-CLI", matchType: UserAgentMappingMatchTypeStartsWith, want: true},
+		{name: "exact", userAgent: "Cursor/1.0", pattern: "cursor/1.0", matchType: UserAgentMappingMatchTypeExact, want: true},
+		{name: "regex", userAgent: "custom-client/42", pattern: `custom-client/\d+`, matchType: UserAgentMappingMatchTypeRegex, want: true},
+		{name: "invalid regex", userAgent: "custom-client/42", pattern: `[`, matchType: UserAgentMappingMatchTypeRegex, want: false},
+		{name: "unknown match type", userAgent: "custom-client/42", pattern: "custom", matchType: UserAgentMappingMatchType("bad"), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MatchUserAgent(tt.userAgent, tt.pattern, tt.matchType); got != tt.want {
+				t.Fatalf("MatchUserAgent(%q, %q, %q) = %v, want %v", tt.userAgent, tt.pattern, tt.matchType, got, tt.want)
+			}
+		})
+	}
+}

@@ -3383,6 +3383,59 @@ func (s *RDBLogStore) GetDistinctApps(ctx context.Context, limit int, query stri
 	return apps, nil
 }
 
+// CreateUserAgentMapping persists a custom User-Agent to app mapping.
+func (s *RDBLogStore) CreateUserAgentMapping(ctx context.Context, mapping *UserAgentMapping) error {
+	if err := s.db.WithContext(ctx).Create(mapping).Error; err != nil {
+		return fmt.Errorf("failed to create user agent mapping: %w", err)
+	}
+	return nil
+}
+
+// UpdateUserAgentMapping updates an existing custom User-Agent mapping by ID.
+func (s *RDBLogStore) UpdateUserAgentMapping(ctx context.Context, id string, mapping *UserAgentMapping) error {
+	result := s.db.WithContext(ctx).Model(&UserAgentMapping{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"pattern":    mapping.Pattern,
+		"match_type": mapping.MatchType,
+		"app":        mapping.App,
+		"logo":       mapping.Logo,
+		"logo_mime":  mapping.LogoMime,
+		"is_active":  mapping.IsActive,
+		"updated_at": mapping.UpdatedAt,
+	})
+	if result.Error != nil {
+		return fmt.Errorf("failed to update user agent mapping: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// DeleteUserAgentMapping removes a custom User-Agent mapping by ID.
+func (s *RDBLogStore) DeleteUserAgentMapping(ctx context.Context, id string) error {
+	result := s.db.WithContext(ctx).Delete(&UserAgentMapping{}, "id = ?", id)
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete user agent mapping: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// ListUserAgentMappings returns custom User-Agent mappings ordered by creation time.
+func (s *RDBLogStore) ListUserAgentMappings(ctx context.Context, activeOnly bool) ([]UserAgentMapping, error) {
+	var mappings []UserAgentMapping
+	q := s.db.WithContext(ctx).Model(&UserAgentMapping{})
+	if activeOnly {
+		q = q.Where("is_active = ?", true)
+	}
+	if err := q.Order("created_at ASC").Find(&mappings).Error; err != nil {
+		return nil, fmt.Errorf("failed to list user agent mappings: %w", err)
+	}
+	return mappings, nil
+}
+
 // metadataSystemKeys are metadata keys added by the system that should be excluded from filter data.
 var metadataSystemKeys = map[string]struct{}{
 	"isAsyncRequest": {},
